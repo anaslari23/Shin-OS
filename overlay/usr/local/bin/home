@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# Shin home screen: fullscreen GTK3 app grid. cage shows the newest window on top,
+# so launching an app covers this and closing it returns here.
+import subprocess, time, gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib, Gdk
+
+APPS = [("Terminal", "foot"), ("Power off", "poweroff")]  # (label, command) -- add apps here
+
+CSS = b"""
+window { background: #14161c; }
+#clock { font-size: 64px; color: #fff; }
+#date { font-size: 20px; color: #9aa; }
+button.tile { background: #262a36; border-radius: 28px; border: none; padding: 18px; }
+button.tile:hover { background: #343a4c; }
+.glyph { font-size: 56px; color: #7cc4ff; }
+.name { font-size: 18px; color: #fff; }
+"""
+
+def launch(_btn, cmd):
+    subprocess.Popen(cmd.split())
+
+win = Gtk.Window()
+win.connect("destroy", Gtk.main_quit)
+css = Gtk.CssProvider(); css.load_from_data(CSS)
+Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin=32)
+clock, date = Gtk.Label(name="clock"), Gtk.Label(name="date")
+root.pack_start(clock, False, False, 0); root.pack_start(date, False, False, 0)
+
+grid = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, max_children_per_line=4,
+                   homogeneous=True, row_spacing=16, column_spacing=16, margin_top=40, valign=Gtk.Align.START)
+for label, cmd in APPS:
+    b = Gtk.Button(); b.get_style_context().add_class("tile")
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    g = Gtk.Label(label=label[0]); g.get_style_context().add_class("glyph")
+    n = Gtk.Label(label=label); n.get_style_context().add_class("name")
+    box.pack_start(g, False, False, 0); box.pack_start(n, False, False, 0)
+    b.add(box); b.connect("clicked", launch, cmd); grid.add(b)
+root.pack_start(grid, True, True, 0)
+
+def tick():
+    clock.set_text(time.strftime("%H:%M")); date.set_text(time.strftime("%A, %d %B"))
+    return True
+tick(); GLib.timeout_add_seconds(1, tick)
+
+win.set_decorated(False); win.add(root); win.fullscreen(); win.show_all(); Gtk.main()

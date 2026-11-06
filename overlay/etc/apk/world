@@ -1,0 +1,11 @@
+alpine-base
+seatd
+cage
+foot
+font-dejavu
+mesa-dri-gallium
+eudev
+udev-init-scripts
+udev-init-scripts-openrc
+gtk+3.0
+py3-gobject3
